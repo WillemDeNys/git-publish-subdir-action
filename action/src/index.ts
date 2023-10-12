@@ -117,11 +117,7 @@ export interface EnvironmentVariables {
    * * `{msg}` - the commit message for the HEAD of the current branch
    */
   MESSAGE?: string;
-  /**
-   * An optional path to a file to use as a list of globs defining which files
-   * to delete when clearing the target branch
-   */
-  CLEAR_GLOBS_FILE?: string;
+  
   /**
    * An optional string in git-check-ref-format to use for tagging the commit
    */
@@ -536,42 +532,6 @@ export const main = async ({
   // // Update contents of branch
   log.log(`##[info] Updating branch ${config.branch}`);
 
-  /**
-   * The list of globs we'll use for clearing
-   */
-  const globs = await (async () => {
-    if (env.CLEAR_GLOBS_FILE) {
-      // We need to use a custom mechanism to clear the files
-      log.log(
-        `##[info] Using custom glob file to clear target branch ${env.CLEAR_GLOBS_FILE}`
-      );
-      const globList = (await fs.readFile(env.CLEAR_GLOBS_FILE))
-        .toString()
-        .split('\n')
-        .map((s) => s.trim())
-        .filter((s) => s !== '');
-      return globList;
-    } else if (env.TARGET_DIR) {
-      log.log(
-        `##[info] Removing all files from target dir ${env.TARGET_DIR} on target branch`
-      );
-      return [`${env.TARGET_DIR}/**/*`, '!.git'];
-    } else {
-      // Remove all files
-      log.log(`##[info] Removing all files from target branch`);
-      return ['**/*', '!.git'];
-    }
-  })();
-  const filesToDelete = fgStream(globs, {
-    absolute: true,
-    dot: true,
-    followSymbolicLinks: false,
-    cwd: REPO_TEMP,
-  });
-  // Delete all files from the filestream
-  for await (const entry of filesToDelete) {
-    await fs.unlink(entry);
-  }
   const folder = path.resolve(process.cwd(), config.folder);
   const destinationFolder = env.TARGET_DIR ? env.TARGET_DIR : './';
 
