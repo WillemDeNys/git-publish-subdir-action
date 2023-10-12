@@ -12266,40 +12266,7 @@ const main = async ({ env = process.env, log, }) => {
     }
     // // Update contents of branch
     log.log(`##[info] Updating branch ${config.branch}`);
-    /**
-     * The list of globs we'll use for clearing
-     */
-    const globs = await (async () => {
-        if (env.CLEAR_GLOBS_FILE) {
-            // We need to use a custom mechanism to clear the files
-            log.log(`##[info] Using custom glob file to clear target branch ${env.CLEAR_GLOBS_FILE}`);
-            const globList = (await fs_1.promises.readFile(env.CLEAR_GLOBS_FILE))
-                .toString()
-                .split('\n')
-                .map((s) => s.trim())
-                .filter((s) => s !== '');
-            return globList;
-        }
-        else if (env.TARGET_DIR) {
-            log.log(`##[info] Removing all files from target dir ${env.TARGET_DIR} on target branch`);
-            return [`${env.TARGET_DIR}/**/*`, '!.git'];
-        }
-        else {
-            // Remove all files
-            log.log(`##[info] Removing all files from target branch`);
-            return ['**/*', '!.git'];
-        }
-    })();
-    const filesToDelete = (0, fast_glob_1.stream)(globs, {
-        absolute: true,
-        dot: true,
-        followSymbolicLinks: false,
-        cwd: REPO_TEMP,
-    });
-    // Delete all files from the filestream
-    for await (const entry of filesToDelete) {
-        await fs_1.promises.unlink(entry);
-    }
+
     const folder = path.resolve(process.cwd(), config.folder);
     const destinationFolder = env.TARGET_DIR ? env.TARGET_DIR : './';
     // Make sure the destination folder exists
